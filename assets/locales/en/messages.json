@@ -1,0 +1,11 @@
+{
+    "appName": {
+        "message": "a-better-subcribe-system"
+    },
+    "appShortName": {
+        "message": "a-better-subcribe-system"
+    },
+    "appDescription": {
+        "message": "browser extension for subscribing to playlists versus channels"
+    }
+}
