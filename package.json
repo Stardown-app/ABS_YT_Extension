@@ -6,7 +6,7 @@
     "author": "Jonathan Chua",
     "repository": {
         "type": "git",
-        "url": "ENTER GIT REPO URL"
+        "url": "https://github.com/chizuo/COMP583-G1-Extension"
     },
     "scripts": {
         "start": "xt-build -e dev -w",

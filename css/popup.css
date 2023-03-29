@@ -1,6 +1,7 @@
 html {
    position: relative;
-   width: 500px;
+   width: 600px;
+   min-height: 200px;
 }
 
 body {
@@ -10,5 +11,40 @@ body {
 }
 
 .navbar-toggler-icon {
-    transform: scale(0.6);
+   transform: scale(0.6);
+}
+
+.playlist-entry {
+   padding-left: 10px;
+}
+
+li a {
+   text-decoration: none;
+   color: black;
+   font-size: 80%;
+   text-align: left;
+   
+}
+
+ul {
+   list-style: none;
+}
+
+ul.playlist li:nth-child(odd) {
+   background-color: white;
+   margin-left: -32px;
+}
+ 
+ul.playlist li:nth-child(even) {
+   background-color: lightgray;
+   margin-left: -32px;
+}
+
+#account-warning {
+   padding: 15px;
+   font-size: 85%;
+}
+
+.expansion-button:hover {
+   cursor: pointer;
 }

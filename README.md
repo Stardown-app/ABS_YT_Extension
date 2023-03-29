@@ -6,6 +6,7 @@ A browser extension for subscribing to playlists versus channels in YouTube.
 
 | Commands | Description |
 | --- | --- |
+| `npm install` | installs dependencies of the extension application |
 | `npm run start` | build extension, watch file changes |
 | `npm run build` | generate release version |
 | `npm run docs` | generate source code docs |
@@ -15,6 +16,7 @@ A browser extension for subscribing to playlists versus channels in YouTube.
 
 
 ### How to install
+- install the dependencies by entering the command `npm install`
 
 **Google Chrome**
 - Navigate to your extension manager or enter : `chrome://extensions/` in the browser for the URL
