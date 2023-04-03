@@ -33,7 +33,6 @@ function hide() {
         $(`#playlist-${id}`).hide();
         $(`#expansion-button-${id}`).html('<img src="assets/img/inactive/playlist_tracker_icon_24.png">');
     }
-        
 }
 
 function viewed(e) {
@@ -49,6 +48,7 @@ function viewed(e) {
 }
 
 function init() {
+    console.log(account);
     if(account !== null) {
         $('.navbar-nav').html(`
             <li class="nav-item ms-auto">

@@ -1,7 +1,4 @@
-const registerURL = "registerURL";
-const loginURL = "loginURL";
-
-// Sample account data structure
+/* Sample account data structure
 const account = {
     email: 'jon.chua51@gmail.com',
     playlists: [
@@ -192,7 +189,7 @@ const account = {
                 viewed: false
             }
         ]},
-        { playlist_title: "Survival Logic", plid:"", clicked: 0, contents: [
+        { playlist_title: "Survival Logic", plid:"PLSMETuURtTXClX140WdPx9LX8dQts6c1x", clicked: 0, contents: [
             {
                 title: "Survival Logic Trailer",
                 url: "https://www.youtube.com/watch?v=qip-dyjIj4s",
@@ -215,9 +212,18 @@ const account = {
             }
         ]}
     ]
-};
+}; */
+
+var lengthReq = false;
+var upperReq = false;
+var numberReq = false;
+var startReq = false;
 
 function register() {
+    $('.navbar-nav').html(`<li class="nav-item ms-auto">
+        <a class="nav-link active register" aria-current="page" href="#">Register</a>
+    </li>`);
+
     $('#form-app').html(`
         <img class="mb-4" src="./assets/img/inactive/playlist_tracker_icon_128.png" alt="" width="72" height="72">
         <h1 class="h3 mb-3 fw-normal">Please complete to register</h1>
@@ -230,73 +236,97 @@ function register() {
             <label for="password">Password</label>
         </div>
         <div class="form-floating">
-            <input type="password" class="form-control" id="confirmPassword" placeholder="Confirm Password">
-            <label for="confirmPassword">Confirm Password</label>
+            <input type="password" class="form-control" id="confirm-password" placeholder="Confirm Password">
+            <label for="confirm-password">Confirm Password</label>
         </div>
-        <button class="w-100 btn btn-lg btn-primary" id="signup" type="submit">Register</button>
+        <button class="w-100 btn btn-lg btn-primary" id="register-button" type="submit">Register</button>
         <div class="container">
             <span class="container-fluid py-2">
                 Already have an account? <a href="login.html" id="login">Log In</a>
             </span>
         </div>
+        <div class="container" id="system"></div>
         <p class="mt-5 mb-3 text-muted">© A Better Subscription 2023</p>
     `);
+    $('#password').on('input', checkStrength);
+    $('#confirm-password').on('input', validatePassword);
 
-    $('form').submit(function(event) {
+    $('form').submit(async function(event) {
         event.preventDefault();
-        let data = { email: $('#email').val(), password: $('#password').val() }
-        console.log(`http post to: ${registerURL} with ${JSON.stringify(data)}`);
-        /*
-        fetch(url, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(data)
-        })
-        .then(response => response.json())
-        .then(data => {
-            // Code to handle the response data
-            console.log(data);
-        })
-        .catch(error => {
-            // Code to handle errors
-            console.error(error);
-        }); */
+        $('#system').html('');
+        try {
+            const response = await axios.post('http://localhost:12312/v1/account/register', { email: $('#email').val(), password: $('#password').val() });
+            localStorage.setItem('abs_account', JSON.stringify(response.data));
+            window.location.href = 'popup.html';
+        } catch(e) {
+            $('#system').html(e.message);
+        }
     });
 }
 
-function login(event) {
+async function login(event) {
     event.preventDefault();
+    $('#system').html('');
     if($('#email').val() === 'demo@demo.demo') {
         localStorage.setItem('abs_account', JSON.stringify(account));
         window.location.href = 'popup.html';
-    } else { }
+    } else {
+        try {
+            const response = await axios.post('http://localhost:12312/v1/account/', { email: $('#email').val(), password: $('#password').val() });
+            localStorage.setItem('abs_account', JSON.stringify(response.data));
+            window.location.href = 'popup.html';
+        } catch(e) {
+            $('#system').html(e.response.data);
+        }
+    }
+}
+
+function checkStrength() {
+    let password = $('#password').val();
+    let confirmPassword = $('#confirm-password').val();
+    let message = "";
     
-    let data = { email: $('#email').val(), password: $('#password').val() }
-    console.log(`http post to: ${loginURL} with ${JSON.stringify(data)}`);
-    
-    fetch(url, {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    })
-    .then(response => response.json())
-    .then(data => {
-        // Code to handle the response data
-        console.log(data);
-    })
-    .catch(error => {
-        // Code to handle errors
-        console.error(error);
-    });
+    if(password.length > 0) {
+        startReq = !(/^\d/.test(password));
+        upperReq = /[A-Z]/.test(password);
+        numberReq = /\d/.test(password);
+        lengthReq = password.length >= 8;
+
+        if(!lengthReq) message += "Length >= 8<br>";
+        if(!upperReq) message += "Has Uppercase<br>";
+        if(!numberReq) message += "Contains a number";
+        if(!startReq) message += "Cannot start with a number";
+    }
+
+    if(message.length > 0) $('#system').html(`<div>Password requirements:</div>${message}`); 
+    else $('#system').html('');
+
+    if (password !== confirmPassword && !upperReq && !numberReq && !startReq && !lengthReq) {
+        $('#confirm-password').addClass('is-invalid');
+        $('#register-button').prop('disabled', true);
+    } else {
+        $('#confirm-password').removeClass('is-invalid');
+        $('#register-button').prop('disabled', false);
+    }
+}
+
+function validatePassword() {
+    let password = $('#password').val();
+    let confirmPassword = $('#confirm-password').val();
+    if (password !== confirmPassword) {
+        $('#system').html('passwords do not match');
+        $('#confirm-password').addClass('is-invalid');
+        $('#register-button').prop('disabled', true);
+    } else {
+        $('#system').html('');
+        $('#confirm-password').removeClass('is-invalid');
+        $('#register-button').prop('disabled', false);
+    }
 }
 
 function init() {
     $('.register').click(register);
-    $('#signin').click(login);
+    $('#signin-button').click(login);
 }
 
 $(document).ready(function() { init(); });

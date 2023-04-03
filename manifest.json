@@ -2,7 +2,7 @@
     "name": "A Better Subscription Service",
     "short_name": "ABS extension",
     "description": "Browser extension that helps you subscribe to playlists",
-    "homepage_url": "https://github.com/chizuo/COMP583-G1-Extension",
+    "homepage_url": "https://github.com/chizuo/ABS-Browser-App",
     "version": "0.1",
     "version_name": "0.1",
     "manifest_version": 3,
@@ -20,7 +20,7 @@
             "24": "./assets/img/inactive/playlist_tracker_icon_24.png",
             "32": "./assets/img/inactive/playlist_tracker_icon_32.png"
         },
-        "default_title": "A Better Subscription",
+        "default_title": "A Better Subscription Service",
         "default_popup": "popup.html"
     }
 }
