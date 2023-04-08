@@ -48,3 +48,15 @@ ul.playlist li:nth-child(even) {
 .expansion-button:hover {
    cursor: pointer;
 }
+
+.playlist-menu:hover {
+   cursor: pointer;
+}
+
+.options-icon {
+   width: 5%;
+}
+
+.popup-menu {
+   z-index: 1;
+}

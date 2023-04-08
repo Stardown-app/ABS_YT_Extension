@@ -1,0 +1,22 @@
+html {
+    position: relative;
+    width: 600px;
+    min-height: 200px;
+}
+
+body {
+    overflow: hidden; /*padding-top: 10px;*/
+    font-family: arial, sans-serif;
+    font-size: 0.6em;
+}
+
+#app {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+
+#system {
+    align-items: center;
+    color: red;
+    font-size: small;
+}
