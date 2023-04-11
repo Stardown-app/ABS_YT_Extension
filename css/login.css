@@ -10,11 +10,6 @@ body {
   font-size: 0.6em;
 }
 
-#app {
-  padding-left: 15px;
-  padding-right: 15px;
-}
-
 #system {
   align-items: center;
   color: red;

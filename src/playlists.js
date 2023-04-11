@@ -1,22 +1,16 @@
 const account = JSON.parse(localStorage.getItem('abs_account'));
-//chrome.storage.local.get('abs_account', result => { account = result.abs_account; })
 
-function playlistManager() {
-    $('#app').html(`
-        <div class="row align-items-md-stretch justify-content-center p-5">
-            <div class="col-md-6 mx-auto p-1">
-                <button class="btn btn-outline-secondary button-container" type="button" id="subscribe-button">Subscribe to a playlist</button>
-            </div>
-            <div class="col-md-6 mx-auto p-1">
-                <button class="btn btn-outline-secondary button-container" type="button" id="update-name-button">Update a playlist's name</button>
-            </div>
-            <div class="col-md-6 mx-auto p-1">
-                <button class="btn btn-outline-secondary button-container" type="button" id="content-button">Manage playlist content</button>
-            </div>
+function playlistOptions() {
+    $('#app').html(`<br><br><center>
+        <div class="btn-group mr-1" role="group" aria-label="Button group with three buttons">
+            <button type="button" class="btn btn-secondary border" id="subscribe-button">Subscribe to a playlist</button>
+            <button type="button" class="btn btn-secondary border" id="playlists-button">Manage playlists</button>
+            <button type="button" class="btn btn-secondary border" id="content-button">Manage playlist contents</button>
         </div>
-    `);
+    </center>`);
+    footer();
     $('#subscribe-button').click(subscribe);
-    $('#update-name-button').click(updatePlaylistName);
+    $('#playlists-button').click(playlistManager);
     $('#content-button').click(contentManager);
 }
 
@@ -33,17 +27,109 @@ function subscribe() {
             <div class="container" id="system"></div>
         </div>
     `);
+    footer();
     $('#subscription-button').click(query);
     $('#subscription-button').prop('disabled', true);
     $('#playlist-url').on('input', validateYoutube);
 }
 
-function updatePlaylistName() {
+function playlistManager() {
+    $('#app').empty();
+    for(let i = 0; i < account.playlists.length; i++) {            
+        $('#app').append(`<div class="bg-secondary text-bg-secondary border-top border-bottom title-bar py-1" index="${i}">
+            <span class="expansion-button" id="expansion-button-${i}" index="${i}"><img src="assets/img/inactive/playlist_tracker_icon_24.png"></span> 
+            <span class="mx-1">${account.playlists[i].playlist_title}</span>
+            <span class="playlist-menu" index="${i}"><img src="assets/img/option-icon.jpg" class="options-icon" ></span>
+            <span class="popup-menu btn-group" id="popup-menu${i}">
+                <button class="rename btn btn-secondary border" type="button" id="${i}">Rename</button>
+                <button class="unsubscribe btn btn-secondary border" type="button" id="${i}">Unsubscribe</button>
+            </span>
+        </div>`);
+    }
+    footer();
+    $('.popup-menu').hide();
+    $('.playlist-menu').click(playlistMenu);
+    $('.unsubscribe').click(unsubscribe);
+}
 
+function unsubscribe() {
+    let id = $(this).attr('id');
+    account.actions += 1;
+    $('.btn').prop('disabled', true);
+    chrome.storage.local.set({'abs_newData': true}, () => { 
+        account.playlists.splice(id, 1);
+        localStorage.setItem('abs_account', JSON.stringify(account));
+        chrome.storage.local.set({'abs_account': account}, () => window.location.href = "popup.html");
+    });
+}
+
+function playlistMenu() {
+    let id = $(this).attr('index');
+    if($(`#popup-menu${id}`).is(':hidden')) {
+        $('.popup-menu').hide();
+        $(`#popup-menu${id}`).show();
+    } else {
+        $(`#popup-menu${id}`).hide();
+    }
 }
 
 function contentManager() {
+    $('#app').html(`<center>
+    <div class="btn-group mr-1" role="group" aria-label="Button group with three buttons">
+        <button type="button" class="btn btn-primary content-manager border" value="watch">Watched</button>
+        <button type="button" class="btn btn-primary content-manager border" value="unwatch">Unwatched</button>
+        <button type="button" class="btn btn-primary content-manager border" value="delete">Delete</button>
+    </div>
+    </center>`);
+    for(let i = 0; i < account.playlists.length; i++) {            
+        let { playlist_title, contents }  = account.playlists[i];
+        $('#app').append(`<div class="bg-secondary text-bg-secondary p-1 border-top border-bottom title-bar" index="${i}">
+            <span class="expansion-button" id="expansion-button-${i}" index="${i}"><img src="assets/img/active/playlist_tracker_icon_24.png"></span> 
+            <span class="mx-1">${playlist_title} (size: ${contents.length})</span>
+        </div>
+        <ul class="playlist" id="playlist-${i}"></ul>`);
+        for(let j = 0; j < contents.length; j++) {
+            let value = JSON.stringify({playlist:i, content:j});
+            $(`#playlist-${i}`).append(`<li><input type="checkbox" class="playlist-entry" value=${value} id="playlist-entry${j}" name="playlist-entry${j}">
+            <label class="checkbox-label" for="playlist-entry${j}">${contents[j].title}</label></li>`);
+        }
+    }
+    footer();
+    $('.expansion-button').click(hide);
+    $('.content-manager').click(markSelected);
+}
 
+function markSelected() {
+    const selected = $('input[type="checkbox"]:checked');
+    const command = $(this).val();
+    account.actions += 1;
+    if(selected.length > 0) {
+        chrome.storage.local.set({'abs_newData': true}, () => {
+            selected.each(function() {
+                const { playlist, content} = JSON.parse($(this).val());
+                account.playlists[playlist].clicked += 1;
+                if(command === "watch") account.playlists[playlist].contents[content].viewed = true;
+                else if (command === "unwatch") account.playlists[playlist].contents[content].viewed = false;
+                else if (command === "delete") account.playlists[playlist].contents.splice(content, 1);
+                else console.log('command error');
+            });
+            localStorage.setItem('abs_account', JSON.stringify(account));
+            chrome.storage.local.set({'abs_account': account}, () => window.location.href = "popup.html");
+        });
+    } else {
+        window.location.href = "playlists.html";
+    }   
+}
+
+function hide() {
+    let id = $(this).attr('index');
+    if($(`#playlist-${id}`).is(':hidden')) {
+        $(`#playlist-${id}`).show();
+        $(`#expansion-button-${id}`).html('<img src="assets/img/active/playlist_tracker_icon_24.png">');
+    } else {
+        $(`#playlist-${id}`).hide();
+        $(`#expansion-button-${id}`).html('<img src="assets/img/inactive/playlist_tracker_icon_24.png">');
+    }
 }
 
 function validateYoutube() {
@@ -127,11 +213,24 @@ function main() {
         <div id="app"></div>
     `);
     nav();
-    playlistManager();
+    playlistOptions();
+}
+
+function footer() {
+    $('#app').append(`<br><center><hr>
+    <div class="container" id="system"></div>
+    <p class="mt-2 mb-2 text-muted">© A Better Subscription 2023</p>
+    </center>`);
 }
 
 function init() {
     main();
 }
+
+$(document).click(function(e) {
+    if (!$(e.target).closest('.playlist-menu').length && !$(e.target).closest('.popup-menu').length) {
+      $('.popup-menu').hide();
+    }
+});
 
 $(document).ready(function() { init(); });

@@ -40,9 +40,9 @@ function registerForm() {
         event.preventDefault();
         $('#system').html('');
         try {
-            const response = await axios.post('http://chuadevs.com:12312/v1/account/register', { email: $('#email').val(), password: $('#password').val() });
+            const response = await axios.post('http://chuadevs.com:12312/v1/account/', { email: $('#email').val(), password: $('#password').val() });
             localStorage.setItem('abs_account', JSON.stringify(response.data));
-            window.location.href = 'popup.html';
+            chrome.storage.local.set({'abs_account': response.data}, () => window.location.href = 'popup.html');
         } catch(e) {
             $('#system').html(e.message);
         }
@@ -55,7 +55,7 @@ async function login(event) {
     try {
         const response = await axios.post('http://chuadevs.com:12312/v1/account/', { email: $('#email').val(), password: $('#password').val() });
         localStorage.setItem('abs_account', JSON.stringify(response.data));
-        window.location.href = 'popup.html';
+        chrome.storage.local.set({'abs_account': response.data}, () => window.location.href = 'popup.html');
     } catch(e) {
         $('#system').html(e.message);
     }
@@ -133,14 +133,15 @@ function loginForm() {
         <div class="container" id="system"></div>
         <p class="mt-5 mb-3 text-muted">© A Better Subscription 2023</p>
     `);
+    $('#email').on('input', function() { validateEmail() });
     $('.register').click(registerForm);
     $('#signin-button').prop('disabled', true);
     $('#signin-button').click(login);
-    $('#email').on('input', function() { validateEmail() });
 }
 
 function init() {
     loginForm();
+    $('#app').addClass('mx-3');
 }
 
 $(document).ready(function() { init(); });

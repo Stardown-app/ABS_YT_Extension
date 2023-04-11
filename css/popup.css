@@ -57,6 +57,8 @@ ul.playlist li:nth-child(even) {
    width: 5%;
 }
 
-.popup-menu {
-   z-index: 1;
+#system {
+   align-items: center;
+   color: red;
+   font-size: small;
 }

@@ -10,13 +10,38 @@ body {
     font-size: 0.6em;
 }
 
-#app {
-    padding-left: 15px;
-    padding-right: 15px;
+label.checkbox-label {
+    font-size: 70%;
+}
+
+.expansion-button:hover {
+    cursor: pointer;
 }
 
 #system {
     align-items: center;
     color: red;
     font-size: small;
+}
+
+ul {
+    list-style: none;
+}
+
+.options-icon {
+    width: 5%;
+} 
+
+ul.playlist li:nth-child(odd) {
+    background-color: white;
+    margin-left: -30px;
+}
+  
+ul.playlist li:nth-child(even) {
+    background-color: lightgray;
+    margin-left: -30px;
+}
+
+.playlist-menu:hover {
+    cursor: pointer;
 }

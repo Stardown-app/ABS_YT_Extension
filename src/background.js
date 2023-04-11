@@ -1,108 +1,85 @@
 // background service of the extension that checks the subscribed playlists of the account at some set interval
-const subcriptionTime = 60*60000; // 60 minutes
-const accountTime = 15*60000 // 15 minutes
-var account;
-chrome.storage.local.get('abs_account', function(result) { account = result.abs_account; });
+chrome.runtime.onStartup.addListener(() => {
+  chrome.alarms.create("checkSubscriptions", { delayInMinutes: 5, periodInMinutes: 40 });
+});
 
-const playlist = {
-  url: "https://www.youtube.com/playlist?list=PLSMETuURtTXClX140WdPx9LX8dQts6c1x",
-  plid: "PLSMETuURtTXClX140WdPx9LX8dQts6c1x",
-  contents: [
-          {
-              title: "Survival Logic Trailer",
-              url: "https://www.youtube.com/watch?v=qip-dyjIj4s",
-              viewed: false
-          },
-          {
-              title: "First day playing a survival game",
-              url: "https://www.youtube.com/watch?v=XRBE1z8qvSc",
-              viewed: false
-          },
-          {
-              title: "Crafting your first item in a survival game",
-              url: "https://www.youtube.com/watch?v=W0nRSmZ2UXo",
-              viewed: false
-          },
-          {
-              title: "Tedious health meters in survival games",
-              url: "https://www.youtube.com/watch?v=7Gg9iQHfV5A",
-              viewed: false
-          }
-      ]
-}
-
-function messageHandler(request, sender, sendResponse) {
-  if (request.action === 'get_data') {
-    // Make an API call using the fetch to scraper service
-    fetch('http://localhost:1583')
-      .then(response => response.json())
-      .then(data => {
-        // Send the data back to the content script
-        sendResponse({data: data});
-      })
-      .catch(error => {
-        console.error('Error fetching data:', error);
-      });
-    // Return true to indicate that the response will be sent asynchronously
-    return true;
+chrome.alarms.onAlarm.addListener(alarm => {
+  if (alarm.name === "checkSubscriptions") {
+    chrome.storage.local.get('abs_account', result => { 
+      if(result.abs_account !== undefined) checkSubscriptions(result.abs_account, 1);
+      else console.error(`${new Date().toLocaleTimeString()} : account is undefined, fetch call cancelled`);
+    });
   }
+});
+
+function notificationMessage(newContent) {
+  let msg = "New content for: ";
+  for(let i = 0; i < newContent.length; i++) {
+    msg += i > 0 ? ', ' : '';
+    msg += newContent[i];
+  }
+  return msg;
 }
 
-chrome.runtime.onMessage.addListener(messageHandler);
+function checkSubscriptions(account, attempt) {
+  let newContent = [];
+  let promises = [];
 
-function checkSubscriptions() {
-  console.log(`checking subscriptions at: ${new Date().toLocaleTimeString()}`);
-  let newContent = false;
-  let status = 0;
   for(let i = 0; i < account.playlists.length; i++) {
-    fetch('http://chuadevs.com:12312/v1/api/youtube', {
+    let promise = fetch('http://chuadevs.com:12312/v1/api/youtube', {
       method: "PUT",
       body:JSON.stringify(account.playlists[i]),
       headers: {
         'Content-Type': 'application/json'
       }
     }).then(response => {
-      status = response.status;
       if(response.status === 200) return response.json();
       else if(response.status === 204) return;
-      else throw new Error("unexpected status code");
+      else throw new Error(`status:${response.status}, message:${response.statusText}`);
     }).then(data => {
       if(data) {
-        newContent = true;
+        newContent.push(`${account.playlists[i].playlist_title}`);
         for(let j = 0; j < data.length; j++) {
           account.playlists[i].contents.push(data[j]);
         }
       }
-    }).catch(error => console.error(`ERROR: ${error}`)); 
-    if(newContent) {
-      chrome.storage.local.set({ "abs_account": account });
-      chrome.storage.local.set({ 'abs_newData' : account });
-      chrome.notifications.create({
-        type: 'basic',
-        iconUrl: '../assets/img/active/playlist_tracker_icon_128.png',
-        title: 'A Better Subscription Service',
-        message: `You have new content to view`
-      });
-    } 
-  }
-}
-
-function syncAccount() {
-  chrome.storage.local.get('abs_account', function(result) { account = result.abs_account; });
-  console.log(account);
-  if(account !== undefined) {
-    fetch('http://chuadevs.com:12312/v1/account/sync', {
-      method: "PUT",
-      body:JSON.stringify(account),
-      headers: {
-        'Content-Type': 'application/json'
+    }).catch(error => {
+      console.error(`${new Date().toLocaleTimeString()} : Attempt#${attempt}: ${error}`);
+      if(attempt <= 10) {
+        setTimeout(() => {
+          chrome.storage.local.get('abs_account', result => { 
+            account = result.abs_account;
+            checkSubscriptions(account, ++attempt);
+          });
+        }, 6000);
       }
-    }).then(response => { 
-      if(response.ok)
-        console.log(`Background Sync Status: ${response.status}`);
-    }).catch(error => console.error(`ERROR: ${error.message}`)); 
+    }); 
+    promises.push(promise);
   }
+
+  Promise.all(promises).then(() => {
+    if(newContent.length) {
+      chrome.storage.local.set({'abs_newData': true}, () => {
+        chrome.storage.local.set({'abs_account': account}, () => {
+          let message = notificationMessage(newContent);
+          chrome.notifications.create({
+            type: 'basic',
+            iconUrl: '../assets/img/active/playlist_tracker_icon_128.png',
+            title: 'A Better Subscription Service',
+            message: message
+          });
+        });
+      });
+    } else {
+      chrome.storage.local.get('abs_fetchLog', result => {
+        let log = result.abs_fetchLog;
+        let msg = 'checked subscriptions, no new content'
+        if(log !== undefined) log.push(`${new Date().toLocaleTimeString()} : ${msg}`);
+        else log = [`${new Date().toLocaleTimeString()} : ${msg}`];
+        chrome.storage.local.set({'abs_fetchLog': log});
+      });
+    }
+  });
 }
 
-setInterval(checkSubscriptions, subcriptionTime); // checks subscriptions every 60 minutes
-// setInterval(syncAccount, accountTime); // sync user data with database every 30 minutes
+
