@@ -39,8 +39,39 @@ function checkSubscriptions(account, attempt) {
     }).then(data => {
       if(data) {
         newContent.push(`${account.playlists[i].playlist_title}`);
-        for(let j = 0; j < data.length; j++) {
-          account.playlists[i].contents.push(data[j]);
+        const { add, update, remove } = data;
+
+        // add = new content that needs to be added into the playlist
+        if(add.length > 0) {
+          for(let j = 0; j < add.length; j++) {
+            account.playlists[i].contents.push(add[j]);
+          }
+        }
+        
+        // update = existing content where the title of content has been changed
+        if(update.length > 0) {
+          for(let j = 0; j < update.length; j++) {
+            for(let k = 0; k < account.playlists[i].contents.length; k++) {
+              if(update[j].url === account.playlists[i].contents[k].url) {
+                // eventually, we need a change log of the playlist to record these updates
+                account.playlists[i].contents[k].title = update[j].title;
+                break;
+              }
+            }
+          }
+        }
+
+        // remove = content that exists in the user playlist that is no longer contained in the creator's playlist
+        if(remove.length > 0) {
+          for(let j = 0; j < remove.length; j++) {
+            for(let k = 0; k < account.playlists[i].contents.length; k++) {
+              if(remove[j].url === account.playlists[i].contents[k].url) {
+                account.playlists[i].contents.splice(k, 1);
+                // eventually, we need a change log of the playlist to record these removes
+                break;
+              }
+            }
+          }
         }
       }
     }).catch(error => {

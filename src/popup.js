@@ -38,7 +38,7 @@ function playlist() {
     }
 }
 
-function markAll() {
+async function markAll() {
     let id = $(this).attr('id');
     let viewed = $(this).attr('marker') === 'watch' ? true : false;
     $('.mark-all').prop('disabled', true);
@@ -48,14 +48,16 @@ function markAll() {
         account.playlists[id].contents[i].viewed = viewed;
     }
     try {
-        chrome.storage.local.set({ "abs_account": account }, async () => {
-            await axios.put('http://chuadevs.com:12312/v1/account/sync', account);
+        await axios.put('http://chuadevs.com:12312/v1/account/sync', account);
+        chrome.storage.local.set({ "abs_account": account }, () => {
             localStorage.setItem('abs_account', JSON.stringify(account));
             location.reload();
-        });
+        });  
     } catch(e) {
-        $('#system').html(e.message);
+        $('#system').html(e.response.data.error.message);
+        $('.mark-all').prop('disabled', false);
     }
+    
 }
 
 function playlistMenu() {
@@ -94,7 +96,7 @@ function viewed(e) {
             location.reload();
         }); 
     } catch(e) {
-        $('#system').html(e.message);
+        $('#system').html(e.response.data.error.message);
     }
     $(this).hide();
     window.open(url)
@@ -106,7 +108,7 @@ function logoff() {
         localStorage.removeItem('abs_account');
         chrome.storage.local.remove('abs_account', () => { location.reload(); })
     } catch(e) {
-        $('#system').html(e.message);
+        $('#system').html(e.response.data.error.message);
     }
 }
 
@@ -125,21 +127,19 @@ function init() {
             </li>
         `);
         $('#log-off').click(logoff);
-        $('#playlist-options').click(() => { window.location.href = 'playlists.html' });
+        $('#playlist-options').click(() => window.location.href = 'playlists.html');
         chrome.storage.local.get(['abs_newData', 'abs_account'], async result => {
             if(result.abs_newData) {
                 try {
-                    let response = await axios.put('http://chuadevs.com:12312/v1/account/sync', result.abs_account);
-                    if(response.status === 200) { 
-                        chrome.storage.local.remove('abs_newData', () => {
-                            localStorage.setItem('abs_account', JSON.stringify(result.abs_account));
-                            location.reload(); 
-                        });
-                    } else { throw new Error(response.data); }
+                    await axios.put('http://chuadevs.com:12312/v1/account/sync', result.abs_account);
+                    chrome.storage.local.remove('abs_newData', () => {
+                        localStorage.setItem('abs_account', JSON.stringify(result.abs_account));
+                        location.reload(); 
+                    });
                 } catch(e) {
-                    console.error(e.message);
+                    console.error(e.response.data.error.message);
                     setTimeout(() => {
-                        $('#system').html(e.message);
+                        $('#system').html(e.response.data.error.message);
                         location.reload();
                     }, 10000);
                 }
@@ -150,7 +150,7 @@ function init() {
                         for(let i = 0; i < log.length; i++) {
                             console.log(log[i]);
                         }
-                        chrome.storage.local.remove('abs_fetchLog', () => { playlist(); });
+                        chrome.storage.local.remove('abs_fetchLog', () => playlist());
                     } else {
                         console.log('fetchLog is undefined');
                         playlist();

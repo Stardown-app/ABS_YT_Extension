@@ -1,10 +1,12 @@
 const account = JSON.parse(localStorage.getItem('abs_account'));
+var popupFocus = true;
 
 function playlistOptions() {
     $('#app').html(`<br><br><center>
-        <div class="btn-group mr-1" role="group" aria-label="Button group with three buttons">
-            <button type="button" class="btn btn-secondary border" id="subscribe-button">Subscribe to a playlist</button>
-            <button type="button" class="btn btn-secondary border" id="playlists-button">Manage playlists</button>
+        <div class="btn-group mr-1" role="group" aria-label="Button group with four buttons">
+            <button type="button" class="btn btn-secondary border" id="subscribe-button">Subscribe</button>
+            <button type="button" class="btn btn-secondary border" data-bs-toggle="tooltip" data-bs-placement="top" title="this feaure coming soon!" id="changelog-button">Playlist change logs</button>
+            <button type="button" class="btn btn-secondary border" id="playlists-button">Manage my playlists</button>
             <button type="button" class="btn btn-secondary border" id="content-button">Manage playlist contents</button>
         </div>
     </center>`);
@@ -12,6 +14,7 @@ function playlistOptions() {
     $('#subscribe-button').click(subscribe);
     $('#playlists-button').click(playlistManager);
     $('#content-button').click(contentManager);
+    $('[data-bs-toggle="tooltip"]').tooltip();
 }
 
 function subscribe() {
@@ -38,11 +41,11 @@ function playlistManager() {
     for(let i = 0; i < account.playlists.length; i++) {            
         $('#app').append(`<div class="bg-secondary text-bg-secondary border-top border-bottom title-bar py-1" index="${i}">
             <span class="expansion-button" id="expansion-button-${i}" index="${i}"><img src="assets/img/inactive/playlist_tracker_icon_24.png"></span> 
-            <span class="mx-1">${account.playlists[i].playlist_title}</span>
+            <span class="mx-1" id="playlist-title${i}">${account.playlists[i].playlist_title}</span>
             <span class="playlist-menu" index="${i}"><img src="assets/img/option-icon.jpg" class="options-icon" ></span>
             <span class="popup-menu btn-group" id="popup-menu${i}">
-                <button class="rename btn btn-secondary border" type="button" id="${i}">Rename</button>
-                <button class="unsubscribe btn btn-secondary border" type="button" id="${i}">Unsubscribe</button>
+                <button class="rename btn btn-secondary border" type="button" index="${i}">Rename</button>
+                <button class="unsubscribe btn btn-secondary border" type="button" index="${i}">Unsubscribe</button>
             </span>
         </div>`);
     }
@@ -50,16 +53,68 @@ function playlistManager() {
     $('.popup-menu').hide();
     $('.playlist-menu').click(playlistMenu);
     $('.unsubscribe').click(unsubscribe);
+    $('.rename').click(rename);
+}
+
+function rename() {
+    let id = $(this).attr('index');
+    let DOMplaylist = $(`#playlist-title${id}`);
+    let DOMpopup = $(`#popup-menu${id}`);
+    let title = DOMplaylist.text();
+
+    DOMplaylist.data('prev', DOMplaylist.clone());
+    DOMpopup.data('prev', DOMpopup.clone());
+
+    DOMplaylist.html(`<input type="text" name="title" class="input-lg border rounded" id="title-input${id}" value="${title}">`);
+    DOMpopup.html(`
+        <button class="btn btn-secondary border" type="button" id="update">Update</button>
+        <button class="btn btn-secondary border" type="button" id="cancel">Cancel</button>
+    `);
+
+    $(`#title-input${id}`).on('focus', () => { 
+        popupFocus = false;
+        $(`#popup-menu${id}`).show(); 
+    });
+
+    $('#update').click(() => {
+        let value = $(`#title-input${id}`).val();
+        if(title === value) {
+            DOMplaylist.html(DOMplaylist.data('prev'));
+            DOMpopup.html(DOMpopup.data('prev'));
+            popupFocus = true;
+            $(`#popup-menu${id}`).hide(); 
+        } else {
+            account.actions += 1;
+            account.playlists[id].playlist_title = value;
+            update("playlistManager");
+        }
+    });
+
+    $('#cancel').click(() => {
+        DOMplaylist.html(DOMplaylist.data('prev'));
+        DOMpopup.html(DOMpopup.data('prev'));
+        popupFocus = true;
+        $(`#popup-menu${id}`).hide(); 
+    });
 }
 
 function unsubscribe() {
-    let id = $(this).attr('id');
+    let id = $(this).attr('index');
     account.actions += 1;
     $('.btn').prop('disabled', true);
+    account.playlists.splice(id, 1);
+    update("playlistManager");
+}
+
+function update(load) {
     chrome.storage.local.set({'abs_newData': true}, () => { 
-        account.playlists.splice(id, 1);
         localStorage.setItem('abs_account', JSON.stringify(account));
-        chrome.storage.local.set({'abs_account': account}, () => window.location.href = "popup.html");
+        chrome.storage.local.set({'abs_account': account}, () => {
+            if(load === "contentManager") contentManager();
+            else if(load === "playlistManager") playlistManager();
+            else if(load === "menu") window.location.href = "playlists.html";
+            else window.location.href = "popup.html"; 
+        });
     });
 }
 
@@ -104,20 +159,18 @@ function markSelected() {
     const command = $(this).val();
     account.actions += 1;
     if(selected.length > 0) {
-        chrome.storage.local.set({'abs_newData': true}, () => {
-            selected.each(function() {
-                const { playlist, content} = JSON.parse($(this).val());
-                account.playlists[playlist].clicked += 1;
-                if(command === "watch") account.playlists[playlist].contents[content].viewed = true;
-                else if (command === "unwatch") account.playlists[playlist].contents[content].viewed = false;
-                else if (command === "delete") account.playlists[playlist].contents.splice(content, 1);
-                else console.log('command error');
-            });
-            localStorage.setItem('abs_account', JSON.stringify(account));
-            chrome.storage.local.set({'abs_account': account}, () => window.location.href = "popup.html");
+        selected.each(function() {
+            const { playlist, content} = JSON.parse($(this).val());
+            account.playlists[playlist].clicked += 1;
+            if(command === "watch") account.playlists[playlist].contents[content].viewed = true;
+            else if (command === "unwatch") account.playlists[playlist].contents[content].viewed = false;
+            else if (command === "delete") account.playlists[playlist].contents.splice(content, 1);
+            else console.log('command error');
         });
+        if(command === "delete") update("contentManager");
+        else update("menu");
     } else {
-        window.location.href = "playlists.html";
+        window.location.href = "popup.html";
     }   
 }
 
@@ -154,20 +207,15 @@ async function query(event) {
     try {
         const url = $('#playlist-url').val();
         for(let i = 0; i < account.playlists.length; i++) {
-            if(account.playlists[i].playlist_url == url) { new Error('You are already subscribed to this playlist'); }
+            if(account.playlists[i].playlist_url == url) { throw new Error('You are already subscribed to this playlist'); }
         }
         $('#subscription-button').prop('disabled', true);
         const response = await axios.post('http://chuadevs.com:12312/v1/api/youtube', { url: url });
-        if(response.status === 200) {
-            account.playlists.push(response.data);
-            localStorage.setItem('abs_account',  JSON.stringify(account));
-            const sync = await axios.put('http://chuadevs.com:12312/v1/account/sync', account);
-            if(sync.status === 200)
-                window.location.href = 'popup.html';
-        }
+        account.playlists.push(response.data);
+        update("playlist");
     } catch(e) {
         $('#subscription-button').prop('disabled', false);
-        $('#system').html(e.message);
+        $('#system').html(e.response.data.error.message);
     }
 }
 
@@ -228,7 +276,7 @@ function init() {
 }
 
 $(document).click(function(e) {
-    if (!$(e.target).closest('.playlist-menu').length && !$(e.target).closest('.popup-menu').length) {
+    if (!$(e.target).closest('.playlist-menu').length && !$(e.target).closest('.popup-menu').length && popupFocus === true) {
       $('.popup-menu').hide();
     }
 });
