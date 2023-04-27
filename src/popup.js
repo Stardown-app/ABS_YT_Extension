@@ -1,6 +1,6 @@
 const account = JSON.parse(localStorage.getItem('abs_account'));
 
-function playlist() {
+function main() {
     if(account.playlists.length === 0) {
         $('#app').html(`
             <div class="container p-5 text-center">
@@ -39,6 +39,7 @@ function playlist() {
 }
 
 async function markAll() {
+    $('#system').html(`<img src="./assets/img/loading.gif" id="floating-animation">`);
     let id = $(this).attr('id');
     let viewed = $(this).attr('marker') === 'watch' ? true : false;
     $('.mark-all').prop('disabled', true);
@@ -54,7 +55,7 @@ async function markAll() {
             location.reload();
         });  
     } catch(e) {
-        $('#system').html(e.response.data.error.message);
+        $('#system').html(e.response.data);
         $('.mark-all').prop('disabled', false);
     }
     
@@ -96,7 +97,7 @@ function viewed(e) {
             location.reload();
         }); 
     } catch(e) {
-        $('#system').html(e.response.data.error.message);
+        $('#system').html(e.response.data);
     }
     $(this).hide();
     window.open(url)
@@ -104,16 +105,17 @@ function viewed(e) {
 
 function logoff() {
     try {
+        $('#system').html(`<img id="floating-animation" src="./assets/img/loading.gif">`);
         axios.put('http://chuadevs.com:12312/v1/account/sync', account);
         localStorage.removeItem('abs_account');
         chrome.storage.local.remove('abs_account', () => { location.reload(); })
     } catch(e) {
-        $('#system').html(e.response.data.error.message);
+        $('#system').html(e.response.data);
     }
 }
 
 function init() {
-    $('#system').empty();
+    $('#system').html(`<img id="floating-animation" src="./assets/img/loading.gif">`);
     if(account) {
         $('.navbar-nav').html(`
             <li class="nav-item ms-auto">
@@ -128,6 +130,7 @@ function init() {
         `);
         $('#log-off').click(logoff);
         $('#playlist-options').click(() => window.location.href = 'playlists.html');
+        $('#account-options').click(() => window.location.href = 'account.html');
         chrome.storage.local.get(['abs_newData', 'abs_account'], async result => {
             if(result.abs_newData) {
                 try {
@@ -137,11 +140,8 @@ function init() {
                         location.reload(); 
                     });
                 } catch(e) {
-                    console.error(e.response.data.error.message);
-                    setTimeout(() => {
-                        $('#system').html(e.response.data.error.message);
-                        location.reload();
-                    }, 10000);
+                    console.error(e.response.data);
+                    setTimeout(() => location.reload(), 10000);
                 }
             } else {
                 chrome.storage.local.get('abs_fetchLog', result => {
@@ -150,10 +150,10 @@ function init() {
                         for(let i = 0; i < log.length; i++) {
                             console.log(log[i]);
                         }
-                        chrome.storage.local.remove('abs_fetchLog', () => playlist());
+                        chrome.storage.local.remove('abs_fetchLog', () => main());
                     } else {
                         console.log('fetchLog is undefined');
-                        playlist();
+                        main();
                     }
                 });
             } 
@@ -174,10 +174,17 @@ function init() {
     }
 }
 
-$(document).click(function(e) {
-    if (!$(e.target).closest('.playlist-menu').length && !$(e.target).closest('.popup-menu').length) {
-      $('.popup-menu').hide();
+function refresh() {
+    try {
+        chrome.runtime.sendMessage({action: "checkSubscriptions"}, response => {});
+    } catch(err) {
+        console.log('successfully work up service worker');
     }
+}
+
+$(document).click(function(e) {
+    if(account.email === "jon.chua51@gmail.com") $('#secret-plum-sauce').click(refresh);
+    if (!$(e.target).closest('.playlist-menu').length && !$(e.target).closest('.popup-menu').length) $('.popup-menu').hide();
 });
 
 $(document).ready(function() { init(); });

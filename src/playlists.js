@@ -27,7 +27,7 @@ function subscribe() {
                 <label for="playlist-url">Playlist URL</label>
             </div>
             <button class="w-100 btn btn-lg btn-primary" id="subscription-button" type="submit">Add to my subscriptions</button>
-            <div class="container" id="system"></div>
+            <div class="container text-center" id="system"></div>
         </div>
     `);
     footer();
@@ -202,12 +202,17 @@ function validateYoutube() {
 
 async function query(event) {
     event.preventDefault();
-    $('#system').html('');
+    $('#system').html(`<img src="./assets/img/loading.gif" id="floating-animation">`);
     account.actions += 1;
     try {
         const url = $('#playlist-url').val();
         for(let i = 0; i < account.playlists.length; i++) {
-            if(account.playlists[i].playlist_url == url) { throw new Error('You are already subscribed to this playlist'); }
+            if(account.playlists[i].playlist_url == url) { 
+                let error = new Error();
+                error.response = {};
+                error.response.data = 'You are already subscribed to this playlist';
+                throw error;
+            }
         }
         $('#subscription-button').prop('disabled', true);
         const response = await axios.post('http://chuadevs.com:12312/v1/api/youtube', { url: url });
@@ -215,7 +220,7 @@ async function query(event) {
         update("playlist");
     } catch(e) {
         $('#subscription-button').prop('disabled', false);
-        $('#system').html(e.response.data.error.message);
+        $('#system').html(e.response.data);
     }
 }
 
@@ -237,10 +242,11 @@ function nav() {
             localStorage.removeItem('abs_account');
             await chrome.storage.local.remove('abs_account', () => { location.reload(); })
         } catch(e) {
-            $('#system').html(e.message);
+            $('#system').html(e.response.data);
         }
     });
-    $('#playlist-view').click(function() { window.location.href = 'popup.html' });
+    $('#playlist-view').click(() => window.location.href = 'popup.html');
+    $('#account-manager').click(() => window.location.href = 'account.html');
 }
 
 function main() {
@@ -271,14 +277,10 @@ function footer() {
     </center>`);
 }
 
-function init() {
-    main();
-}
-
 $(document).click(function(e) {
     if (!$(e.target).closest('.playlist-menu').length && !$(e.target).closest('.popup-menu').length && popupFocus === true) {
       $('.popup-menu').hide();
     }
 });
 
-$(document).ready(function() { init(); });
+$(document).ready(() => main());

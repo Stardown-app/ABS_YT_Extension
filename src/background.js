@@ -7,7 +7,16 @@ chrome.alarms.onAlarm.addListener(alarm => {
   if (alarm.name === "checkSubscriptions") {
     chrome.storage.local.get('abs_account', result => { 
       if(result.abs_account !== undefined) checkSubscriptions(result.abs_account, 1);
-      else console.error(`${new Date().toLocaleTimeString()} : account is undefined, fetch call cancelled`);
+      else console.log(`${new Date().toLocaleTimeString()} : account is undefined, fetch call cancelled`);
+    });
+  }
+});
+
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  if (request.action == "checkSubscriptions") {
+    chrome.storage.local.get('abs_account', result => { 
+      if(result.abs_account !== undefined) checkSubscriptions(result.abs_account, 1);
+      else console.log(`${new Date().toLocaleTimeString()} : account is undefined, fetch call cancelled`);
     });
   }
 });
@@ -112,5 +121,3 @@ function checkSubscriptions(account, attempt) {
     }
   });
 }
-
-
