@@ -1,7 +1,7 @@
 {
     "name": "a-better-subcribe-system",
     "description": "browser extension for subscribing to playlists versus channels",
-    "version": "0.9",
+    "version": "1.0",
     "homepage": "http://chrome.google.com/webstore",
     "author": "Jonathan Chua",
     "repository": {
@@ -47,6 +47,7 @@
         ]
     },
     "dependencies": {
+        "animate.css": "^4.1.1",
         "axios": "^1.3.4",
         "bootstrap": "^5.2.3"
     }

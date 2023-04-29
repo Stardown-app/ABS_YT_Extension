@@ -1,10 +1,10 @@
 {
     "name": "A Better Subscription Service",
     "short_name": "ABS extension",
-    "description": "Browser extension that helps you subscribe to playlists",
+    "description": "Browser extension that helps you subscribe to playlists vs. channels",
     "homepage_url": "https://github.com/chizuo/ABS-Browser-App",
-    "version": "0.8",
-    "version_name": "0.8",
+    "version": "1.0",
+    "version_name": "1.0",
     "manifest_version": 3,
     "minimum_chrome_version": "88",
     "permissions": ["storage","notifications","alarms"],
