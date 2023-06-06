@@ -72,7 +72,7 @@ function rename() {
             updateCancel(id);
         } else {
             account.actions += 1;
-            account.playlists[id].playlist_title = value;
+            account.playlists[id].playlist_title = $(`#title-input${id}`).val();
             update("playlistManager");
         }
     });

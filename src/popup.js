@@ -2,6 +2,7 @@ const account = JSON.parse(localStorage.getItem('abs_account'));
 
 function main() {
     if(account.playlists.length === 0) {
+        $('#system').empty();
         $('#app').html(`
             <div class="container p-5 text-center">
                 Your account does not have any playlists it is subscribed to. Navigate to the playlist options to subscribe to one.

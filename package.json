@@ -27,9 +27,6 @@
     "eslintIgnore": [
         "test/**/*"
     ],
-    "devDependencies": {
-        "extension-cli": "latest"
-    },
     "xtdocs": {
         "source": {
             "include": [
