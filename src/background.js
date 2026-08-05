@@ -1,10 +1,23 @@
 // background service of the extension that checks the subscribed playlists of the account at some set interval
-chrome.runtime.onStartup.addListener(() => {
-  chrome.alarms.create("checkSubscriptions", { delayInMinutes: 5, periodInMinutes: 40 });
-});
+const CHECK_SUBSCRIPTIONS_ALARM = "checkSubscriptions";
+const CHECK_SUBSCRIPTIONS_OPTIONS = { delayInMinutes: 5, periodInMinutes: 40 };
+
+function scheduleSubscriptionChecks() {
+  chrome.alarms.create(CHECK_SUBSCRIPTIONS_ALARM, CHECK_SUBSCRIPTIONS_OPTIONS);
+}
+
+function ensureSubscriptionChecks() {
+  chrome.alarms.get(CHECK_SUBSCRIPTIONS_ALARM, alarm => {
+    if (!alarm) scheduleSubscriptionChecks();
+  });
+}
+
+chrome.runtime.onInstalled.addListener(scheduleSubscriptionChecks);
+chrome.runtime.onStartup.addListener(scheduleSubscriptionChecks);
+ensureSubscriptionChecks();
 
 chrome.alarms.onAlarm.addListener(alarm => {
-  if (alarm.name === "checkSubscriptions") {
+  if (alarm.name === CHECK_SUBSCRIPTIONS_ALARM) {
     chrome.storage.local.get('abs_account', result => { 
       if(result.abs_account !== undefined) checkSubscriptions(result.abs_account, 1);
       else console.log(`${new Date().toLocaleTimeString()} : account is undefined, fetch call cancelled`);
