@@ -147,7 +147,7 @@ function checkSubscriptions(account, attempt) {
           let message = notificationMessage(newContent);
           chrome.notifications.create({
             type: 'basic',
-            iconUrl: '../assets/img/active/playlist_tracker_icon_128.png',
+            iconUrl: 'assets/img/active/playlist_tracker_icon_128.png',
             title: 'A Better Subscription Service',
             message: message
           });
