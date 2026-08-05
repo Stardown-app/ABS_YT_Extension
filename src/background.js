@@ -1,6 +1,10 @@
 // background service of the extension that checks the subscribed playlists of the account at some set interval
 const CHECK_SUBSCRIPTIONS_ALARM = "checkSubscriptions";
+const CHECK_SUBSCRIPTIONS_RETRY_ALARM = "checkSubscriptionsRetry";
 const CHECK_SUBSCRIPTIONS_OPTIONS = { delayInMinutes: 5, periodInMinutes: 40 };
+const MAX_RETRY_ATTEMPTS = 10;
+// Chrome clamps alarm delays below one minute up to one minute in stable builds.
+const RETRY_DELAY_MINUTES = 1;
 
 function scheduleSubscriptionChecks() {
   chrome.alarms.create(CHECK_SUBSCRIPTIONS_ALARM, CHECK_SUBSCRIPTIONS_OPTIONS);
@@ -12,25 +16,51 @@ function ensureSubscriptionChecks() {
   });
 }
 
+function scheduleSubscriptionRetry(attempt) {
+  if (attempt > MAX_RETRY_ATTEMPTS) {
+    clearSubscriptionRetry();
+    return;
+  }
+
+  chrome.storage.local.set({ abs_retryAttempt: attempt }, () => {
+    chrome.alarms.create(CHECK_SUBSCRIPTIONS_RETRY_ALARM, {
+      delayInMinutes: RETRY_DELAY_MINUTES
+    });
+  });
+}
+
+function clearSubscriptionRetry() {
+  chrome.alarms.clear(CHECK_SUBSCRIPTIONS_RETRY_ALARM);
+  chrome.storage.local.remove('abs_retryAttempt');
+}
+
+function startSubscriptionCheck(attempt) {
+  chrome.storage.local.get('abs_account', result => {
+    if (result.abs_account !== undefined) checkSubscriptions(result.abs_account, attempt);
+    else console.log(`${new Date().toLocaleTimeString()} : account is undefined, fetch call cancelled`);
+  });
+}
+
 chrome.runtime.onInstalled.addListener(scheduleSubscriptionChecks);
 chrome.runtime.onStartup.addListener(scheduleSubscriptionChecks);
 ensureSubscriptionChecks();
 
 chrome.alarms.onAlarm.addListener(alarm => {
   if (alarm.name === CHECK_SUBSCRIPTIONS_ALARM) {
-    chrome.storage.local.get('abs_account', result => { 
-      if(result.abs_account !== undefined) checkSubscriptions(result.abs_account, 1);
-      else console.log(`${new Date().toLocaleTimeString()} : account is undefined, fetch call cancelled`);
+    clearSubscriptionRetry();
+    startSubscriptionCheck(1);
+  } else if (alarm.name === CHECK_SUBSCRIPTIONS_RETRY_ALARM) {
+    chrome.storage.local.get('abs_retryAttempt', result => {
+      const attempt = result.abs_retryAttempt || 1;
+      startSubscriptionCheck(attempt);
     });
   }
 });
 
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
   if (request.action == "checkSubscriptions") {
-    chrome.storage.local.get('abs_account', result => { 
-      if(result.abs_account !== undefined) checkSubscriptions(result.abs_account, 1);
-      else console.log(`${new Date().toLocaleTimeString()} : account is undefined, fetch call cancelled`);
-    });
+    clearSubscriptionRetry();
+    startSubscriptionCheck(1);
   }
 });
 
@@ -46,6 +76,7 @@ function notificationMessage(newContent) {
 function checkSubscriptions(account, attempt) {
   let newContent = [];
   let promises = [];
+  let hadFailure = false;
 
   for(let i = 0; i < account.playlists.length; i++) {
     let promise = fetch('http://chuadevs.com:12312/v1/api/youtube', {
@@ -98,19 +129,18 @@ function checkSubscriptions(account, attempt) {
       }
     }).catch(error => {
       console.error(`${new Date().toLocaleTimeString()} : Attempt#${attempt}: ${error}`);
-      if(attempt <= 10) {
-        setTimeout(() => {
-          chrome.storage.local.get('abs_account', result => { 
-            account = result.abs_account;
-            checkSubscriptions(account, ++attempt);
-          });
-        }, 6000);
-      }
+      hadFailure = true;
     }); 
     promises.push(promise);
   }
 
   Promise.all(promises).then(() => {
+    if (hadFailure) {
+      scheduleSubscriptionRetry(attempt + 1);
+    } else {
+      clearSubscriptionRetry();
+    }
+
     if(newContent.length) {
       chrome.storage.local.set({'abs_newData': true}, () => {
         chrome.storage.local.set({'abs_account': account}, () => {
@@ -123,7 +153,7 @@ function checkSubscriptions(account, attempt) {
           });
         });
       });
-    } else {
+    } else if (!hadFailure) {
       chrome.storage.local.get('abs_fetchLog', result => {
         let log = result.abs_fetchLog;
         let msg = 'checked subscriptions, no new content'
