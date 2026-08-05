@@ -10,8 +10,8 @@ function app() {
     $('body').append(`
     <nav class="navbar navbar-light" style="background-color: #eef1ef;">
       <div class="container-fluid">
-        <a class="navbar-brand me-auto" id="secret-plum-sauce">
-          <img src="/assets/img/inactive/playlist_tracker_icon_32.png">
+        <a class="navbar-brand me-auto" href="#" id="manual-sync" title="Check for new videos">
+          <img src="/assets/img/inactive/playlist_tracker_icon_32.png" alt="ABS">
         </a>
         <button class="navbar-toggler collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse" aria-controls="navbarCollapse" aria-expanded="false" aria-label="Toggle navigation">
           <span class="navbar-toggler-icon"></span>
@@ -23,6 +23,15 @@ function app() {
     </nav>
     <div id="app" class="animate__animated animate__slideInRight"></div>
     `);
+
+    $('#manual-sync').click(function(e) {
+        e.preventDefault();
+        try {
+            chrome.runtime.sendMessage({action: "checkSubscriptions"});
+        } catch(err) {
+            console.log('woke service worker for subscription check');
+        }
+    });
 }
 
 async function logoff() {

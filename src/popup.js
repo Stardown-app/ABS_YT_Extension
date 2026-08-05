@@ -160,16 +160,7 @@ function init() {
     } else { window.location.href = 'login.html'; }
 }
 
-function refresh() {
-    try {
-        chrome.runtime.sendMessage({action: "checkSubscriptions"}, response => {});
-    } catch(err) {
-        console.log('successfully work up service worker');
-    }
-}
-
 $(document).click(function(e) {
-    if(account.email === "jon.chua51@gmail.com") $('#secret-plum-sauce').click(refresh);
     if (!$(e.target).closest('.playlist-menu').length && !$(e.target).closest('.popup-menu').length) $('.popup-menu').hide();
 });
 
