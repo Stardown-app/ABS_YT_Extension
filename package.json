@@ -1,47 +1,17 @@
 {
-    "name": "a-better-subcribe-system",
-    "description": "browser extension for subscribing to playlists versus channels",
-    "version": "1.0",
-    "homepage": "http://chrome.google.com/webstore",
+    "name": "abs-yt-extension",
+    "description": "Browser extension for subscribing to YouTube playlists instead of channels",
+    "version": "1.0.0",
+    "private": true,
+    "license": "MIT",
+    "homepage": "https://github.com/Stardown-app/ABS_YT_Extension",
     "author": "Jonathan Chua",
     "repository": {
         "type": "git",
-        "url": "https://github.com/chizuo/ABS-Browser-App"
+        "url": "git+https://github.com/Stardown-app/ABS_YT_Extension.git"
     },
-    "scripts": {
-        "start": "xt-build -e dev -w",
-        "start:firefox": "xt-build -e dev -p firefox -w",
-        "build": "xt-build -e prod",
-        "build:firefox": "xt-build -e prod -p firefox",
-        "clean": "xt-clean",
-        "docs": "xt-docs",
-        "test": "xt-test",
-        "coverage": "nyc --reporter=lcov npm run test",
-        "sync": "xt-sync"
-    },
-    "babel": {
-        "presets": [
-            "@babel/preset-env"
-        ]
-    },
-    "eslintIgnore": [
-        "test/**/*"
-    ],
-    "xtdocs": {
-        "source": {
-            "include": [
-                "README.md",
-                "src"
-            ]
-        }
-    },
-    "xtbuild": {
-        "js_bundles": [
-            {
-                "name": "background",
-                "src": "./src/**/*.js"
-            }
-        ]
+    "bugs": {
+        "url": "https://github.com/Stardown-app/ABS_YT_Extension/issues"
     },
     "dependencies": {
         "animate.css": "^4.1.1",

@@ -2,7 +2,7 @@
     "name": "A Better Subscription Service",
     "short_name": "ABS extension",
     "description": "Browser extension that helps you subscribe to playlists vs. channels",
-    "homepage_url": "https://github.com/chizuo/ABS-Browser-App",
+    "homepage_url": "https://github.com/Stardown-app/ABS_YT_Extension",
     "version": "1.0",
     "version_name": "1.0",
     "manifest_version": 3,

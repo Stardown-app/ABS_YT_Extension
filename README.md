@@ -1,18 +1,29 @@
-# A Better Subcription System
+# A Better Subscription System
 
-A browser extension for subscribing to playlists versus channels in YouTube.
+A browser extension for subscribing to YouTube playlists instead of channels.
 
 ### How to install
-- install the dependencies by entering the command `npm install`
+
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Load the unpacked extension:
 
 **Google Chrome**
-- Navigate to your extension manager or enter : `chrome://extensions/` in the browser for the URL
-- Enable `Developer mode`
-- Select `Load unpacked`
-- Go to the folder that contains `manifest.json` and select that folder to load
+- Open `chrome://extensions/`
+- Enable **Developer mode**
+- Choose **Load unpacked**
+- Select the folder that contains `manifest.json`
 
 **Microsoft Edge**
-- Navigate to your extension manager or enter : `edge://extensions/` in the browser for the URL
-- Enable `Developer mode`
-- Select `Load unpacked`
-- Go to the folder that contains `manifest.json` and select that folder to load
+- Open `edge://extensions/`
+- Enable **Developer mode**
+- Choose **Load unpacked**
+- Select the folder that contains `manifest.json`
+
+### Repository
+
+https://github.com/Stardown-app/ABS_YT_Extension

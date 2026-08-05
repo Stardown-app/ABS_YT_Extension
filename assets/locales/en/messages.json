@@ -1,11 +1,11 @@
 {
     "appName": {
-        "message": "a-better-subcribe-system"
+        "message": "A Better Subscription System"
     },
     "appShortName": {
-        "message": "a-better-subcribe-system"
+        "message": "ABS"
     },
     "appDescription": {
-        "message": "browser extension for subscribing to playlists versus channels"
+        "message": "Browser extension for subscribing to YouTube playlists instead of channels"
     }
 }
