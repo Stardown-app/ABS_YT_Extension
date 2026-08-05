@@ -2,14 +2,16 @@ const account = JSON.parse(localStorage.getItem('abs_account'));
 
 function accountOptions() {
     $('#app').html(`<center class="m-5">
-        <div class="btn-group mr-1" role="group" aria-label="Button group with 3 buttons">
+        <div class="btn-group mr-1" role="group" aria-label="Account options">
             <button type="button" class="btn btn-secondary border" data-bs-toggle="tooltip" data-bs-placement="top" title="this feaure coming soon!" id="email-button">Update email</button>
             <button type="button" class="btn btn-secondary border" id="password-button">Update password</button>
             <button type="button" class="btn btn-secondary border" id="metrics-button">Account metrics</button>
+            <button type="button" class="btn btn-secondary border" id="api-settings-button">API server</button>
         </div>
     </center>`);
     $('#password-button').click(passwordUpdate);
     $('#metrics-button').click(dashboard);
+    $('#api-settings-button').click(() => showApiSettings({ onBack: accountOptions }));
     $('[data-bs-toggle="tooltip"]').tooltip();
 }
 
@@ -144,7 +146,7 @@ function newPassword(email, oldPassword) {
             account.actions += 1;
             $('#submit-button').prop('disabled', true);
             $('#system').html(`<img src="./assets/img/loading-200.gif" id="floating-animation">`);
-            await axios.put('http://chuadevs.com:12312/v1/account', { email: email, password: oldPassword, new_email: undefined, new_password: $('#password').val()});
+            await axios.put(await apiUrl('/v1/account'), { email: email, password: oldPassword, new_email: undefined, new_password: $('#password').val()});
             $('#system').append('Update successful! Returning to your playlists page');
             setTimeout(() => window.location.href = 'popup.html', 2500);
         } catch(e) {

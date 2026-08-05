@@ -3,7 +3,7 @@ async function login(event) {
     try {
         $('#system').html(`<img id="floating-animation" src="./assets/img/loading-200.gif">`);
         $('#signin-button').prop('disabled', true);
-        const response = await axios.post('http://chuadevs.com:12312/v1/account/', { email: $('#email').val(), password: $('#password').val() });
+        const response = await axios.post(await apiUrl('/v1/account/'), { email: $('#email').val(), password: $('#password').val() });
         localStorage.setItem('abs_account', JSON.stringify(response.data));
         chrome.storage.local.set({'abs_account': response.data}, () => window.location.href = 'popup.html');
     } catch(e) {
@@ -29,10 +29,17 @@ function loginForm() {
             <span class="container-fluid py-2">
                 Need an account? <a href="#" class="register">Register</a>
             </span>
+            <div class="container-fluid py-1">
+                <a href="#" id="api-settings-link">API server settings</a>
+            </div>
         </div>
     `);
     $('#email').on('input', () => validateEmail($('#signin-button')) );
     $('.register').click(registerForm);
+    $('#api-settings-link').click(event => {
+        event.preventDefault();
+        showApiSettings({ onBack: loginForm });
+    });
     $('#signin-button').prop('disabled', true);
     $('#signin-button').click(login);
 }
@@ -42,7 +49,7 @@ async function register(event) {
     try {
         $('#system').html(`<img id="floating-animation" src="./assets/img/loading-200.gif">`);
         $('#register-button').prop('disabled', true);
-        const response = await axios.post('http://chuadevs.com:12312/v1/account/register', { email: $('#email').val(), password: $('#password').val() });
+        const response = await axios.post(await apiUrl('/v1/account/register'), { email: $('#email').val(), password: $('#password').val() });
         localStorage.setItem('abs_account', JSON.stringify(response.data));
         chrome.storage.local.set({'abs_account': response.data}, () => window.location.href = 'popup.html');
     } catch(e) {
